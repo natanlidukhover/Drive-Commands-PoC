@@ -16,23 +16,23 @@ extern "C" {
 struct sg_io_hdr {
 	interface_id:		i32,			// [i] 'S' for SCSI generic (required)
 	dxfer_direction:	i32,			// [i] data transfer direction
-	cmd_len:			u8,		// [i] SCSI command length ( <= 16 bytes)
-	mx_sb_len:			u8,		// [i] max length to write to sbp
-	iovec_count:		u16,		// [i] 0 implies no scatter gather
+	cmd_len:			u8,				// [i] SCSI command length ( <= 16 bytes)
+	mx_sb_len:			u8,				// [i] max length to write to sbp
+	iovec_count:		u16,			// [i] 0 implies no scatter gather
 	dxfer_len:			u32,			// [i] byte count of data transfer
 	dxferp:				*mut c_void,	// [i], [*io] points to data transfer memory or scatter gather list
-	cmdp:				*const u8,	// [i], [*i] points to command to perform
-	sbp:				*mut u8,	// [i], [*o] points to sense_buffer memory
+	cmdp:				*const u8,		// [i], [*i] points to command to perform
+	sbp:				*mut u8,		// [i], [*o] points to sense_buffer memory
 	timeout:			u32,			// [i] MAX_UINT->no timeout (unit: millisec)
 	flags:				u32,			// [i] 0 -> default, see SG_FLAG...
 	pack_id:			i32,			// [i->o] unused internally (normally)
 	usr_ptr:			*mut c_void,	// [i->o] unused internally
-	status:				u8,		// [o] scsi status
-	masked_status:		u8,		// [o] shifted, masked scsi status
-	msg_status:			u8,		// [o] messaging level data (optional)
-	sb_len_wr:			u8,		// [o] byte count actually written to sbp
-	host_status:		u16,		// [o] errors from host adapter
-	driver_status:		u16,		// [o] errors from software driver
+	status:				u8,				// [o] scsi status
+	masked_status:		u8,				// [o] shifted, masked scsi status
+	msg_status:			u8,				// [o] messaging level data (optional)
+	sb_len_wr:			u8,				// [o] byte count actually written to sbp
+	host_status:		u16,			// [o] errors from host adapter
+	driver_status:		u16,			// [o] errors from software driver
 	resid:				i32,			// [o] dxfer_len - actual_transferred
 	duration:			u32,			// [o] time taken by cmd (unit: millisec)
 	info:				u32,			// [o] auxiliary information
@@ -78,7 +78,7 @@ fn run_app() -> Result<(), ()> {
 	// Prepare inquiry command
 	struct sg_io_hdr io_hdr;
 	
-    memset(&io_hdr, 0, sizeof(struct sg_io_hdr));
+	memset(&io_hdr, 0, sizeof(struct sg_io_hdr));
     io_hdr.interface_id = 'S';
     io_hdr.cmd_len = sizeof(turCmbBlk);
     io_hdr.mx_sb_len = sizeof(sense_b);
