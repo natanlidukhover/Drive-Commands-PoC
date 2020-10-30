@@ -1,17 +1,21 @@
+use std::io;
 use std::env;
 use std::ptr;
 use std::fs::File;
 use std::path::Path;
 use std::ffi::c_void;
-use std::os::unix::io::{AsRawFd, RawFd};
+use std::os::unix::io::AsRawFd;
 
 const INQ_REPLY_LEN : u8 = 96;
 const INQ_CMD_CODE : u8 = 0x12;
 const INQ_CMD_LEN : u8 = 6;
+const SENSE_LEN : u8 = 32;
 const SG_GET_VERSION_NUM : u32 = 0x2282;
 const SG_IO: u32 = 0x2285;
 const SG_DXFER_NONE : i32 = -1;
 const SG_DXFER_FROM_DEV : i32 = -3;
+const SG_INFO_OK : u32 = 0x0;
+const SG_INFO_OK_MASK : u32 =  0x1;
 
 extern "C" {
 	fn ioctl(fd: i32, request: u32, ...) -> i32;
@@ -96,21 +100,23 @@ fn run_app() -> Result<(), ()> {
 	let args : Vec<String> = env::args().collect();
 	let drive_path = Path::new(&args[1]);
 	// Set up variables
-	let k: i32;
+	let k: i32 = 0;
 	let inq_cmd_blk : [u8; INQ_CMD_LEN as usize] = [INQ_CMD_CODE, 0, 0, 0, INQ_REPLY_LEN, 0];
-	let inq_buffer : [u8; INQ_REPLY_LEN as usize];
-	let sense_buffer : [u8; 32];
+	let mut inq_buffer : [u8; INQ_REPLY_LEN as usize] = [0; INQ_REPLY_LEN as usize];
+	let mut sense_buffer : [u8; SENSE_LEN as usize] = [0; SENSE_LEN as usize];
 	// Open the file given for desired drive
-	let mut sg = match File::open(&drive_path) {
+	let sg = match File::open(&drive_path) {
 		Err(err) => panic!("Could not open {}: {}", drive_path.display(), err),
 		Ok(file) => file,
 	};
 	let sg_fd : i32 = sg.as_raw_fd();
 	// Check if sg device
-	if ioctl(sg_fd, SG_GET_VERSION_NUM, &k) < 0 || k < 30000 {
-		panic!("{} is not an sg device, or old sg driver", &args[1]);
+	unsafe {
+		if ioctl(sg_fd, SG_GET_VERSION_NUM, &k) < 0 || k < 30000 {
+			panic!("{} is not an sg device, or old sg driver: {}", &args[1], io::Error::last_os_error());
+		}
 	}
-	// Prepare inquiry command
+	// Prepare command
 	let io_hdr = sg_io_hdr {
 		interface_id: 		'S' as i32,
 		dxfer_direction: 	SG_DXFER_FROM_DEV,
@@ -123,8 +129,11 @@ fn run_app() -> Result<(), ()> {
 		timeout: 			20000,
 		..Default::default()
 	};
-	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
-
+	// Send command
+	unsafe {
+		if ioctl(sg_fd, SG_IO, &io_hdr) < 0 {
+			panic!("{}: Inquiry SG_IO ioctl error: {}", &args[1], io::Error::last_os_error());
+		}
 	}
 	Ok(())
 }
