@@ -85,11 +85,12 @@ impl sg_io_hdr {
 fn main() {
     std::process::exit(match run_app() {
         Ok(_) => {
-            println!("GREAT SUCCESS!");
+            println!();
+            println!("Exited successfully");
             0
         },
         Err(err) => {
-            eprintln!("ERROR :: {}", err);
+            eprintln!("ERROR :: {:?}", err);
             1
         }
     });
@@ -159,10 +160,21 @@ fn run_app() -> Result<(), ()> {
         }
         // Assume inquiry response is present
         else {
-            let p : *char = inqBuff as *mut char;
-            print!("Some of the INQUIRY command's response:\n");
-            print!("    {:.8}  {:.16}  {:.4}\n", p + 8, p + 16, p + 32);
-            print!("INQUIRY duration = {} millisecs, resid = {}\n", io_hdr.duration, io_hdr.resid);
+            // Parse inquiry response
+            let vendor_id = std::str::from_utf8(&inq_buffer[8..16]).unwrap().to_string();
+            let model_number = std::str::from_utf8(&inq_buffer[16..32]).unwrap().to_string();
+            let firmware_rev = std::str::from_utf8(&inq_buffer[32..36]).unwrap().to_string();
+            let serial_number = std::str::from_utf8(&inq_buffer[36..44]).unwrap().to_string();
+            // Print parsed response
+            println!("======SCSI INQUIRY Command Response======");
+            println!();
+            println!("Vendor ID: {}", vendor_id);
+            println!("Model Number: {}", model_number);
+            println!("Firmware Revision: {}", firmware_rev);
+            println!("Serial Number: {}", serial_number);
+            println!();
+            println!("INQUIRY Duration = {} ms", io_hdr.duration);
+            println!("INQUIRY Resid (non-zero means shortened DMA transfer) = {}", io_hdr.resid);
         }
     Ok(())
 }
