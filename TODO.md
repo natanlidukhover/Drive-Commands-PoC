@@ -22,6 +22,9 @@
       * Windows (OS-level)
       * Linux
       * FreeBSD
+* At some point in the code, the interface should be automatically detected
+  * Figure out if the drive is SCSI or ATA or anything else by sending an identify (or equivalent)
+  * May differ by OS
 * Follow the philosophy
   * You **DON'T** want to be everything to everyone 
   * For example, openSeaChest is all about portability, and its philosophy is
